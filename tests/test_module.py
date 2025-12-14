@@ -1,4 +1,11 @@
-# test_widget.py — расширенный тест
+# tests/test_module.py
+
+import sys
+from pathlib import Path
+
+# Добавляем папку src в путь, чтобы можно было импортировать widget
+src_path = Path(__file__).parent.parent / "src"
+sys.path.append(str(src_path))
 
 import widget
 
