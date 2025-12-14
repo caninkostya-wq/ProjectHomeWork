@@ -1,7 +1,8 @@
 # tests/test_module.py
 
-import sys
 from pathlib import Path
+import sys
+
 import pytest
 
 # Добавляем src в путь, чтобы можно было импортировать widget
