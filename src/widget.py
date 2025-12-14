@@ -1,5 +1,6 @@
 from src.masks import get_mask_card_number, get_mask_account
 
+from datetime import datetime
 
 def mask_account_card(info: str) -> str:
     """
@@ -29,3 +30,20 @@ def mask_account_card(info: str) -> str:
         card_number = parts[1]
         masked_number = get_mask_card_number(card_number)
         return f"{name} {masked_number}"
+
+
+def get_date(date_string: str) -> str:
+    """
+    Преобразует строку с датой из формата ISO (например, "2024-03-11T02:26:18.671407")
+    в формат "ДД.ММ.ГГГГ".
+
+    Args:
+        date_string (str): Строка с датой в формате "ГГГГ-ММ-ДДTHH:MM:SS.ffffff"
+
+    Returns:
+        str: Дата в формате "ДД.ММ.ГГГГ"
+    """
+    # Парсим входную строку как ISO-формат даты
+    dt = datetime.fromisoformat(date_string)
+    # Форматируем в нужный вид: день, месяц, год с ведущими нулями
+    return dt.strftime("%d.%m.%Y")
