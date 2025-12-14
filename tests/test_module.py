@@ -1,6 +1,6 @@
 # test_widget.py — расширенный тест
 
-import widget.py
+import widget
 
 
 # Список тестовых данных

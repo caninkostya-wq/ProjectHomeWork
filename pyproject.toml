@@ -8,6 +8,7 @@ packages = [{include = "pythonproject9"}]
 
 [tool.poetry.dependencies]
 python = "^3.14"
+pytest = "^9.0.2"
 
 
 [build-system]
