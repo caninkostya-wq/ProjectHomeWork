@@ -1,15 +1,12 @@
-# tests/test_module.py
+import sys
+import pytest
+import widget
 
 from pathlib import Path
-import sys
-
-import pytest
 
 # Добавляем src в путь, чтобы можно было импортировать widget
 src_path = Path(__file__).parent.parent / "src"
 sys.path.append(str(src_path))
-
-import widget
 
 
 @pytest.mark.parametrize(
