@@ -1,8 +1,9 @@
-import sys
-import pytest
-import widget
-
 from pathlib import Path
+import sys
+
+import pytest
+
+from src import widget
 
 # Добавляем src в путь, чтобы можно было импортировать widget
 src_path = Path(__file__).parent.parent / "src"
