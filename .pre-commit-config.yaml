@@ -18,3 +18,12 @@ repos:
     hooks:
       - id: flake8
         exclude: .venv,venv,__pycache__,migrations,tests/settings.py
+
+  # Проверка типов — mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.19.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-requests
+        exclude: .*/migrations/.*|tests/settings.py
