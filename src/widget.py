@@ -4,47 +4,39 @@ from src.masks import get_mask_account, get_mask_card_number
 
 
 def mask_account_card(info: str) -> str:
-    """
-    Маскирует номер карты или счёта в зависимости от типа.
-    Использует готовые функции get_mask_card_number и get_mask_account.
-
-    Args:
-        info (str): Строка с типом и номером. Пример: 'Visa Platinum 7000792289606361' или 'Счет 73654108430135874305'
-
-    Returns:
-        str: Строка с замаскированным номером.
-    """
-    if not info.strip():
+    info = info.strip()
+    if not info:
         raise ValueError("Входная строка не должна быть пустой")
 
     if info.startswith("Счет "):
-        account_number = info[5:]  # вырезаем номер после "Счет "
+        account_number = info[5:].strip()
+        if not account_number.isdigit():
+            raise ValueError("Номер счёта должен содержать только цифры")
         masked_number = get_mask_account(account_number)
         return f"Счет {masked_number}"
     else:
-        # Для карт: разделяем по последнему пробелу (на случай, если в названии несколько слов)
         parts = info.rsplit(maxsplit=1)
         if len(parts) != 2:
             raise ValueError("Неверный формат: ожидалось название и номер карты")
 
-        name = parts[0]
-        card_number = parts[1]
+        name_parts = [part for part in parts[0].strip().split() if part]
+        name = " ".join(name_parts)
+        card_number = parts[1].strip()
+
+        if not name or not card_number:
+            raise ValueError("Неверный формат: ожидалось название и номер карты")
+
+        if not card_number.isdigit():
+            raise ValueError("Номер карты должен содержать только цифры")
+
         masked_number = get_mask_card_number(card_number)
-        return f"{name} {masked_number}"
+        return f"{name} {masked_number}"  # Ровно один пробел между частями
 
 
 def get_date(date_string: str) -> str:
-    """
-    Преобразует строку с датой из формата ISO (например, "2024-03-11T02:26:18.671407")
-    в формат "ДД.ММ.ГГГГ".
-
-    Args:
-        date_string (str): Строка с датой в формате "ГГГГ-ММ-ДДTHH:MM:SS.ffffff"
-
-    Returns:
-        str: Дата в формате "ДД.ММ.ГГГГ"
-    """
-    # Парсим входную строку как ISO-формат даты
-    dt = datetime.fromisoformat(date_string)
-    # Форматируем в нужный вид: день, месяц, год с ведущими нулями
-    return dt.strftime("%d.%m.%Y")
+    """Преобразует ISO-дату в формат ДД.ММ.ГГГГ"""
+    try:
+        dt = datetime.fromisoformat(date_string.strip())
+        return dt.strftime("%d.%m.%Y")
+    except ValueError as e:
+        raise ValueError(f"Неверный формат даты: {date_string}. Требуется ISO-формат (ГГГГ-ММ-ДДTHH:MM:SS)") from e
