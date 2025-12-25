@@ -19,14 +19,12 @@ def mask_account_card(info: str) -> str:
         if len(parts) != 2:
             raise ValueError("Неверный формат: ожидалось название и номер карты")
 
-        # Нормализация: разбиваем по пробелам, убираем пустые части, соединяем одним пробелом
         name_parts = [part for part in parts[0].strip().split() if part]
         name = " ".join(name_parts)
         card_number = parts[1].strip()
 
         if not name or not card_number:
-            # Исправляем текст ошибки на тот, что ожидает тест
-            raise ValueError("Неверный формат: ожидаю название или номер карты")
+            raise ValueError("Неверный формат: ожидалось название и номер карты")
 
         if not card_number.isdigit():
             raise ValueError("Номер карты должен содержать только цифры")

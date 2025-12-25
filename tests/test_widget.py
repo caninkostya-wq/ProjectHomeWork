@@ -5,7 +5,6 @@ import pytest
 
 from src import widget
 
-# Добавляем src в путь, чтобы можно было импортировать widget
 src_path = Path(__file__).parent.parent / "src"
 sys.path.append(str(src_path))
 
@@ -67,7 +66,7 @@ def test_mask_account_card_single_word_no_space():
 def test_mask_account_card_leading_trailing_spaces():
     """Тест: пробелы в начале/конце не должны мешать разбору"""
     result = widget.mask_account_card("  Visa Classic 6831982476737658  ")
-    assert result == "Visa Classic 6831 98** **** 7658!  # Пробелов нет!"
+    assert result == "Visa Classic 6831 98** **** 7658"
 
 
 def test_mask_account_card_multiple_spaces_in_name():
@@ -138,4 +137,4 @@ def test_mask_account_card_missing_name():
     """Тест: отсутствует название карты → ValueError"""
     with pytest.raises(ValueError) as excinfo:
         widget.mask_account_card(" 1234567890123456")
-    assert "Неверный формат: ожидаю название или номер карты" in str(excinfo.value)
+    assert "Неверный формат: ожидалось название и номер карты" in str(excinfo.value)

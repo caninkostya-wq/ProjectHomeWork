@@ -178,7 +178,7 @@ def test_card_number_generator_max_value():
 
 
 def test_card_number_generator_large_range_performance():
-    """Генератор с start > end не выдаёт значений"""
-    gen = card_number_generator(1000, 101)
-    result = list(gen)
-    assert result == []
+    """При start > end должен бросаться ValueError"""
+    with pytest.raises(ValueError) as excinfo:
+        list(card_number_generator(1000, 101))  # Принудительная итерация
+    assert "start <= end" in str(excinfo.value)
