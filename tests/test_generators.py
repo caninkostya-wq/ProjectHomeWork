@@ -118,3 +118,67 @@ def test_card_number_generator_edge_case():
     """Крайний случай: максимальное число"""
     result = list(card_number_generator(9999999999999999, 9999999999999999))
     assert result == ["9999 9999 9999 9999"]
+
+
+def test_filter_by_currency_case_sensitive():
+    """Проверка чувствительности к регистру кода валюты"""
+    transactions = [
+        {"operationAmount": {"currency": {"code": "usd"}}},
+        {"operationAmount": {"currency": {"code": "USD"}}},
+    ]
+    result = list(filter_by_currency(transactions, "USD"))
+    assert len(result) == 1  # Только верхний регистр совпадает
+    assert result[0]["operationAmount"]["currency"]["code"] == "USD"
+
+
+def test_filter_by_currency_nested_missing_code():
+    """Транзакция с operationAmount и currency, но без code"""
+    transactions = [
+        {"operationAmount": {"currency": {}}},
+        {"operationAmount": {"currency": {"code": "USD"}}},
+    ]
+    result = list(filter_by_currency(transactions, "USD"))
+    assert len(result) == 1
+    assert result[0]["operationAmount"]["currency"]["code"] == "USD"
+
+
+def test_transaction_descriptions_none_description():
+    """Транзакция с description=None пропускается"""
+    transactions = [
+        {"description": "Есть описание"},
+        {"description": None},
+        {"description": "Другое описание"},
+    ]
+    result = list(transaction_descriptions(transactions))
+    assert result == ["Есть описание", "Другое описание"]
+
+
+def test_transaction_descriptions_non_string_description():
+    """Описание нестрокового типа (число, список и т.п.) пропускается"""
+    transactions = [
+        {"description": "Строка"},
+        {"description": 123},
+        {"description": ["список"]},
+        {"description": {"ключ": "значение"}},
+    ]
+    result = list(transaction_descriptions(transactions))
+    assert result == ["Строка"]
+
+
+def test_card_number_generator_min_value():
+    """Генерация минимального допустимого значения"""
+    result = list(card_number_generator(1, 1))
+    assert result == ["0000 0000 0000 0001"]
+
+
+def test_card_number_generator_max_value():
+    """Генерация максимального допустимого значения"""
+    result = list(card_number_generator(9999999999999999, 9999999999999999))
+    assert result == ["9999 9999 9999 9999"]
+
+
+def test_card_number_generator_large_range_performance():
+    """Генератор с start > end не выдаёт значений"""
+    gen = card_number_generator(1000, 101)
+    result = list(gen)
+    assert result == []

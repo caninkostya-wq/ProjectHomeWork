@@ -106,13 +106,36 @@ def test_get_date_edge_cases():
     # Максимально возможная дата (в рамках разумного)
     assert widget.get_date("9999-12-31T23:59:59") == "31.12.9999"
 
-    def test_mask_account_card_spaces_in_parts():
-        """Тест: пробелы внутри названия и номера карты"""
-        result = widget.mask_account_card("Visa   Classic   6831982476737658")
-        assert result == "Visa Classic 6831 98** **** 7658"
 
-    def test_mask_account_card_only_spaces():
-        """Тест: строка из пробелов → ValueError"""
-        with pytest.raises(ValueError) as excinfo:
-            widget.mask_account_card("   ")
+def test_mask_account_card_spaces_in_parts():
+    """Тест: пробелы внутри названия и номера карты"""
+    result = widget.mask_account_card("Visa   Classic   6831982476737658")
+    assert result == "Visa Classic 6831 98** **** 7658"
+
+
+def test_mask_account_card_only_spaces():
+    """Тест: строка из пробелов → ValueError"""
+    with pytest.raises(ValueError) as excinfo:
+        widget.mask_account_card("   ")
         assert "Входная строка не должна быть пустой" in str(excinfo.value)
+
+
+def test_mask_account_card_empty_input():
+    """Тест: пустая строка → ValueError"""
+    with pytest.raises(ValueError) as excinfo:
+        widget.mask_account_card("")
+    assert "Входная строка не должна быть пустой" in str(excinfo.value)
+
+
+def test_mask_account_card_invalid_card_number():
+    """Тест: номер карты с буквами → ValueError"""
+    with pytest.raises(ValueError) as excinfo:
+        widget.mask_account_card("Visa Classic ABC123")
+    assert "Номер карты должен содержать только цифры" in str(excinfo.value)
+
+
+def test_mask_account_card_missing_name():
+    """Тест: отсутствует название карты → ValueError"""
+    with pytest.raises(ValueError) as excinfo:
+        widget.mask_account_card(" 1234567890123456")
+    assert "Неверный формат: ожидаю название или номер карты" in str(excinfo.value)
