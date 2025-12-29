@@ -17,9 +17,6 @@ def log() -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 def log(filename: str | None = None) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """
     Декоратор для логирования выполнения функции.
-
-    Параметры:
-    filename (str, optional): путь к файлу для записи логов. Если None — логи выводятся в консоль.
     """
 
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
@@ -27,21 +24,23 @@ def log(filename: str | None = None) -> Callable[[Callable[P, R]], Callable[P, R
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             args_repr = str(args)
             kwargs_repr = str(kwargs)
-            msg: str  # Объявляем переменную один раз
+            msg: str
 
             try:
-                # Выполняем функцию
                 result: R = func(*args, **kwargs)
-                # Формируем сообщение об успехе
                 msg = f"{func.__name__} ok\n"
-
             except Exception as e:
                 # Формируем сообщение об ошибке
                 msg = f"{func.__name__} error: {type(e).__name__}. " f"Inputs: {args_repr}, {kwargs_repr}\n"
-                # Перебрасываем исключение после логирования
-                raise
+                # ЗАПИСЫВАЕМ ЛОГ ПЕРЕД ПРОБРОСОМ ИСКЛЮЧЕНИЯ
+                if filename:
+                    with open(filename, "a", encoding="utf-8") as f:
+                        f.write(msg)
+                else:
+                    print(msg.rstrip())
+                raise  # Пробрасываем исключение после лога
 
-            # Записываем лог
+            # Запись для успешного выполнения
             if filename:
                 with open(filename, "a", encoding="utf-8") as f:
                     f.write(msg)

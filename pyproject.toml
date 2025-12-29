@@ -87,3 +87,9 @@ skip = [
     "build"
 ]
 known_first_party = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["tests/test_*.py"]
+addopts = "-v --tb=short"
+
