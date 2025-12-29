@@ -1,4 +1,10 @@
 [flake8]
 max-line-length = 119
-ignore = E203, W503
-exclude = .git, __pycache__, venv, .venv
+extend-ignore = E203,W503,E704
+per-file-ignores =
+    src/decorators.py:E704
+exclude =
+    .git
+    __pycache__
+    venv
+    .venv
