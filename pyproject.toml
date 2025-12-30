@@ -12,20 +12,20 @@ dependencies = [
     "pytest>=9.0.2"
 ]
 
-# Указываем, что другие поля (packages, groups) берутся из tool.poetry
+
 dynamic = ["authors", "description", "readme"]
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-# Оставляем tool.poetry для Poetry-специфичных настроек
+
 [tool.poetry]
 packages = [
     { include = "src", from = "." }
 ]
 
-# Группы зависимостей — остаются здесь, они Poetry-специфичные
+
 [tool.poetry.group.dev.dependencies]
 requests = "^2.32.5"
 pre-commit = "^4.5.1"
@@ -37,7 +37,6 @@ black = "^25.11.0"
 isort = "^7.0.0"
 mypy = "^1.19.0"
 
-# ————— Настройки инструментов ————— (остаются без изменений)
 
 [tool.mypy]
 disallow_untyped_defs = true
@@ -50,7 +49,7 @@ exclude = [
     "__pycache__",
     "migrations",
     "dist",
-    "build",
+    "build"
 ]
 
 [[tool.mypy.overrides]]
@@ -59,7 +58,7 @@ disallow_untyped_defs = false
 
 [tool.black]
 line-length = 119
-target-version = ['py314']
+target-version = ["py314"]
 include = '\.py$'
 exclude = '''
 /(
@@ -78,5 +77,19 @@ profile = "black"
 line_length = 119
 multi_line_output = 3
 force_sort_within_sections = true
-skip = [".venv", "venv", ".git", "__pycache__", "migrations", "dist", "build"]
+skip = [
+    ".venv",
+    "venv",
+    ".git",
+    "__pycache__",
+    "migrations",
+    "dist",
+    "build"
+]
 known_first_party = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["tests/test_*.py"]
+addopts = "-v --tb=short"
+
