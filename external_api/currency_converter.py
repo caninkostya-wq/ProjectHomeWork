@@ -1,6 +1,6 @@
 from decimal import ROUND_HALF_UP, Decimal
 import os
-from typing import Optional
+from typing import Any
 
 from dotenv import load_dotenv
 import requests
@@ -8,50 +8,58 @@ import requests
 load_dotenv()
 
 
-class CurrencyConverter:
-    api_key: Optional[str]
-    base_url: Optional[str]
+def convert_transaction_to_rubles(transaction: dict[str, Any]) -> float:
+    """
+    Конвертирует сумму транзакции в рубли.
 
-    def __init__(self) -> None:
-        self.api_key = os.getenv("EXCHANGE_API_KEY")
-        self.base_url = os.getenv("EXCHANGE_API_URL")
+    Args:
+        transaction: Словарь с полями:
+            - "amount": число (сумма)
+            - "currency": словарь с полем "code" (код валюты)
 
-        if not self.api_key:
-            raise ValueError("EXCHANGE_API_KEY не задан в .env")
-        if not self.base_url:
-            raise ValueError("EXCHANGE_API_URL не задан в .env")
+    Returns:
+        Сумма в рублях как float.
+    Raises:
+        ValueError: Если валюта не поддерживается или данные некорректны.
+        RuntimeError: Если ошибка при запросе к API.
+    """
+    # 1. Извлекаем данные из словаря
+    try:
+        amount = transaction["amount"]
+        currency_code = transaction["currency"]["code"]
+    except KeyError as e:
+        raise ValueError(f"Некорректный формат транзакции: отсутствует поле {e}")
 
-        # mypy пока не сужает тип, но мы проверим в методе
-        self.api_key = self.api_key
-        self.base_url = self.base_url
+    # 2. Если валюта уже RUB — возвращаем сумму как float
+    if currency_code == "RUB":
+        return float(amount)
 
-    def get_exchange_rate(self, currency: str) -> Optional[Decimal]:
-        """Получает курс валюты к RUB через apilayer.com."""
-        assert self.base_url is not None  # ← Ключевая строка для mypy
+    # 3. Проверяем поддерживаемые валюты
+    if currency_code not in ["USD", "EUR"]:
+        raise ValueError(f"Неподдерживаемая валюта: {currency_code}")
 
-        try:
-            headers = {"apikey": self.api_key}
-            params = {"base": currency, "symbols": "RUB"}
-            response = requests.get(self.base_url, headers=headers, params=params, timeout=10)
-            response.raise_for_status()
-            data = response.json()
-            return Decimal(str(data["rates"]["RUB"]))
-        except (requests.RequestException, KeyError, ValueError) as e:
-            print(f"Ошибка получения курса: {e}")
-            return None
+    # 4. Получаем API-ключи из .env
+    api_key = os.getenv("EXCHANGE_API_KEY")
+    base_url = os.getenv("EXCHANGE_API_URL")
 
-    def convert_to_rubles(self, amount: float, currency: str) -> Optional[float]:
-        """Конвертирует сумму в рубли."""
-        if currency == "RUB":
-            return amount
+    if not api_key:
+        raise ValueError("EXCHANGE_API_KEY не задан в .env")
+    if not base_url:
+        raise ValueError("EXCHANGE_API_URL не задан в .env")
 
-        if currency not in ["USD", "EUR"]:
-            raise ValueError(f"Неподдерживаемая валюта: {currency}")
+    # 5. Делаем запрос к API
+    try:
+        headers = {"apikey": api_key}
+        params = {"base": currency_code, "symbols": "RUB"}
+        response = requests.get(base_url, headers=headers, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        rate = Decimal(str(data["rates"]["RUB"]))
+    except (requests.RequestException, KeyError, ValueError) as e:
+        raise RuntimeError(f"Ошибка при получении курса: {e}")
 
-        rate = self.get_exchange_rate(currency)
-        if rate is None:
-            return None
+    # 6. Конвертируем сумму
+    rubles = Decimal(str(amount)) * rate
+    rubles = rubles.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
-        rubles = Decimal(str(amount)) * rate
-        rubles = rubles.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        return float(rubles)
+    return float(rubles)
