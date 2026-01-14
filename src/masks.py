@@ -2,7 +2,8 @@ import logging
 from pathlib import Path
 
 # Создаём папку logs в корне проекта, если её нет
-logs_dir = Path(__file__).parent / "logs"
+project_root = Path(__file__).parent.parent  # Поднимаемся на 1 уровень вверх
+logs_dir = project_root / "logs"
 logs_dir.mkdir(exist_ok=True)
 
 # Настраиваем логгер для модуля masks

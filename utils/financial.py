@@ -6,7 +6,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 # Настройка логгера для модуля utils
-logs_dir = Path(__file__).parent / "logs"
+project_root = Path(__file__).parent.parent
+logs_dir = project_root / "logs"
 logs_dir.mkdir(exist_ok=True)
 
 logger = logging.getLogger(__name__)
