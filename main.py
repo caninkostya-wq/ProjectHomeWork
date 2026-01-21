@@ -1,4 +1,4 @@
-# from utils.financial import get_transaction_rubles, load_financial_transactions
+# from src.utils import get_transaction_rubles, load_financial_transactions
 #
 #  Путь к файлу с транзакциями
 # file_path = "data/operations.json"
@@ -28,7 +28,7 @@
 
 # Импортируем функции из ваших модулей
 from src.masks import get_mask_account, get_mask_card_number
-from utils.financial import get_transaction_rubles, load_financial_transactions
+from src.utils import get_transaction_rubles, load_financial_transactions
 
 
 def main() -> None:
