@@ -37,9 +37,7 @@ def _parse_date(date_str: str) -> Optional[datetime]:
 
 
 def load_financial_transactions(file_path: str) -> List[Dict[str, Any]]:
-    """
-    Загружает транзакции из JSON-файла.
-    """
+    """Загружает транзакции из JSON-файла."""
     logger.info("Начало загрузки транзакций из файла: %s", file_path)
 
     if not os.path.exists(file_path):
@@ -109,9 +107,7 @@ def load_financial_transactions(file_path: str) -> List[Dict[str, Any]]:
 
 
 def get_transaction_rubles(transaction: Dict[str, Any]) -> Optional[float]:
-    """
-    Возвращает сумму транзакции в рублях.
-    """
+    """Возвращает сумму транзакции в рублях."""
     logger.info("Расчёт суммы в рублях для транзакции: %s", transaction)
 
     amount = transaction.get("amount")
