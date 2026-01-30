@@ -1,3 +1,11 @@
+"""
+Модуль для обработки и фильтрации банковских операций.
+
+Предоставляет инструменты для парсинга данных из CSV, Excel и JSON форматов,
+сортировки транзакций по дате, поиска по описанию и фильтрации по валюте.
+Использует pandas для работы с таблицами и регулярные выражения для гибкого поиска.
+"""
+
 from datetime import datetime
 import json
 import logging
@@ -18,6 +26,19 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 
 
 def load_json(path: str) -> List[Dict[str, Any]]:
+    """
+        Загружает список транзакций из JSON-файла.
+
+
+    Args:
+        path: Путь к файлу JSON.
+
+    Returns:
+        Список словарей с данными о транзакциях.
+
+    Raises:
+        ValueError: Если JSON не содержит список.
+    """
     logging.info(f"Начало загрузки транзакций из файла: {path}")
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -28,6 +49,18 @@ def load_json(path: str) -> List[Dict[str, Any]]:
 
 
 def load_csv(path: str) -> List[Dict[str, Any]]:
+    """
+        Загружает транзакции из CSV-файла.
+
+
+    Использует pandas для автоматического определения разделителя.
+
+    Args:
+        path: Путь к файлу CSV.
+
+    Returns:
+        Список словарей с данными. В случае ошибки возвращает пустой список.
+    """
     logging.info(f"Начало загрузки транзакций из файла: {path}")
     try:
         # Читаем через pandas, он автоматически пробует разные разделители или мы указываем ;
@@ -45,6 +78,19 @@ def load_csv(path: str) -> List[Dict[str, Any]]:
 
 
 def load_xlsx(path: str) -> List[Dict[str, Any]]:
+    """
+        Загружает транзакции из файла Excel (XLSX).
+
+
+    Args:
+        path: Путь к файлу XLSX.
+
+    Returns:
+        Список словарей, где ключи — заголовки первой строки.
+
+    Raises:
+        RuntimeError: Если библиотека openpyxl не установлена.
+    """
     if not HAVE_OPENPYXL:
         raise RuntimeError("Для чтения XLSX требуется пакет openpyxl (pip install openpyxl)")
     logging.info(f"Начало загрузки транзакций из файла: {path}")
@@ -65,7 +111,16 @@ def load_xlsx(path: str) -> List[Dict[str, Any]]:
 
 
 def _get_status_from_op(op: Dict[str, Any]) -> Optional[str]:
-    """Извлекает значение статуса, проверяя разные варианты написания ключей."""
+    """
+      Извлекает статус операции, проверяя различные варианты ключей (state, status и т.д.).
+
+
+    Args:
+          op: Словарь с данными транзакции.
+
+    Returns:
+          Строка со статусом или None, если статус не найден.
+    """
     # Создаем временный словарь с ключами в нижнем регистре для удобного поиска
     norm_op = {str(k).lower().strip(): v for k, v in op.items()}
 
@@ -93,6 +148,18 @@ def filter_by_status(data: List[Dict[str, Any]], status: str) -> List[Dict[str, 
 
 
 def _parse_date(d: Any) -> Optional[datetime]:
+    """
+    Преобразует входные данные различных типов в объект datetime.
+
+    Пытается распознать дату в разных форматах (ISO, точка, пробел) или извлечь
+    её из строки с помощью регулярного выражения.
+
+    Args:
+        d: Входное значение для парсинга (строка, datetime или None).
+
+    Returns:
+        Объект datetime, если парсинг прошел успешно, иначе None.
+    """
     if d is None:
         return None
     if isinstance(d, datetime):
@@ -116,6 +183,23 @@ def _parse_date(d: Any) -> Optional[datetime]:
 
 
 def sort_by_date(data: List[Dict[str, Any]], reverse: bool = False) -> List[Dict[str, Any]]:
+    """
+    Сортирует список транзакций по дате операции.
+
+    Функция пытается извлечь дату из полей 'date', 'operationDate' или 'createdAt'
+    и распарсить её с помощью _parse_date. Если дата отсутствует или не распознается,
+    такая запись помещается в конец при сортировке по возрастанию (reverse=False)
+    и в начало при сортировке по убыванию (reverse=True).
+
+    Args:
+        data: Список словарей, каждый из которых представляет транзакцию.
+        reverse: Порядок сортировки. False — от старых к новым (по возрастанию),
+                 True — от новых к старым (по убыванию).
+
+    Returns:
+        Новый список транзакций, отсортированный по дате.
+    """
+
     def key(op: Dict[str, Any]) -> Any:
         d = op.get("date") or op.get("operationDate") or op.get("createdAt")
         parsed = _parse_date(d)
@@ -126,6 +210,16 @@ def sort_by_date(data: List[Dict[str, Any]], reverse: bool = False) -> List[Dict
 
 
 def _get_amount_and_currency(op: Dict[str, Any]) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Извлекает сумму и валюту из транзакции, обрабатывая разные структуры данных.
+
+
+    Args:
+        op: Словарь транзакции.
+
+    Returns:
+         Кортеж (сумма, валюта).
+    """
     # Обычная структура: operationAmount: { "amount": "...", "currency": {"name": "руб."} }
     oa = op.get("operationAmount")
     if isinstance(oa, dict):
@@ -147,6 +241,16 @@ def _get_amount_and_currency(op: Dict[str, Any]) -> Tuple[Optional[str], Optiona
 
 
 def _get_currency_name(op: Dict[str, Any]) -> Optional[str]:
+    """
+       Определяет название валюты операции.
+
+
+    Args:
+       op: Словарь транзакции.
+
+    Returns:
+        Строка с кодом/названием валюты или None.
+    """
     _, cur = _get_amount_and_currency(op)
     if not cur:
         # попробовать найти в тексте поля, содержащем "руб" и т.п.
@@ -158,6 +262,19 @@ def _get_currency_name(op: Dict[str, Any]) -> Optional[str]:
 
 
 def filter_only_rubles(data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Фильтрует список транзакций, возвращая только операции в российских рублях.
+
+    Функция определяет валюту каждой операции через _get_currency_name и сравнивает
+    результат с общепринятыми обозначениями рубля (например, "RUB", "РУБ", "RUR", "R.").
+    Транзакции без указания валюты или в другой валюте исключаются.
+
+    Args:
+        data: Список словарей, каждый из которых представляет транзакцию.
+
+    Returns:
+        Список транзакций, у которых валюта распознана как рубли.
+    """
     res = []
     for op in data:
         cur = _get_currency_name(op)
@@ -169,6 +286,16 @@ def filter_only_rubles(data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 
 def _collect_text_from_op(op: Dict[str, Any]) -> str:
+    """
+        Собирает все текстовые данные из транзакции для полнотекстового поиска.
+
+
+    Args:
+        op: Словарь транзакции.
+
+    Returns:
+        Строка, объединяющая все найденные текстовые поля.
+    """
     parts = []
     keys = (
         "description",
@@ -203,6 +330,18 @@ def _collect_text_from_op(op: Dict[str, Any]) -> str:
 
 
 def process_bank_search(data: List[Dict[str, Any]], query: str) -> List[Dict[str, Any]]:
+    """
+       Фильтрует список транзакций по наличию подстроки или регулярного выражения в данных операции.
+
+
+    Функция собирает весь доступный текст из полей транзакции (описание, отправитель, получатель и др.)
+    и проверяет его на соответствие поисковому запросу
+        query: Строка для поиска (слово, фраза или регулярное выражение).
+
+    Returns:
+        Список транзакций, в которых найдено совпадение с поисковым запросом.
+        Если запрос пустой, возвращается исходный список данных.
+    """
     if not query:
         return data
     try:
@@ -221,6 +360,16 @@ def process_bank_search(data: List[Dict[str, Any]], query: str) -> List[Dict[str
 
 
 def mask_account(acc: str) -> str:
+    """
+    Маскирует номер счета или карты, оставляя видимыми только последние 4 цифры.
+    Например: "Visa Classic 284287893961" -> "Visa Classic ********3961"
+
+    Args:
+       acc: Строка с номером счета.
+
+    Returns:
+         Маскированная строка.
+    """
     if not acc:
         return ""
     s = str(acc)
@@ -244,6 +393,16 @@ def mask_account(acc: str) -> str:
 
 
 def format_operation(op: Dict[str, Any]) -> str:
+    """
+    Формирует красивое строковое представление транзакции для вывода пользователю.
+
+
+    Args:
+        op: Словарь транзакции.
+
+    Returns:
+        Отформатированная многострочная строка.
+    """
     # Дата
     d = op.get("date") or op.get("operationDate") or op.get("createdAt")
     dt = _parse_date(d)
@@ -273,6 +432,16 @@ def format_operation(op: Dict[str, Any]) -> str:
 
 
 def prompt_yes_no(prompt: str) -> bool:
+    """
+    Задает пользователю вопрос и ожидает ответа Да/Нет.
+
+
+    Args:
+        prompt: Текст вопроса.
+
+    Returns:
+        True, если ответ положительный, False в противном случае.
+    """
     while True:
         a = input(prompt + "\nПользователь: ").strip().lower()
         if a in ("да", "д", "yes", "y"):
@@ -283,6 +452,9 @@ def prompt_yes_no(prompt: str) -> bool:
 
 
 def main() -> None:
+    """
+    Основная логика интерфейса программы: выбор файла, фильтрация, сортировка и вывод.
+    """
     print("Программа: Привет! Добро пожаловать в программу работы с банковскими транзакциями.")
     print("Программа: Выберите необходимый пункт меню:")
     print("1. Получить информацию о транзакциях из JSON-файла")
